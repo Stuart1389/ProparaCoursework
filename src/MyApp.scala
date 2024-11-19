@@ -5,6 +5,7 @@
 import scala.annotation.tailrec
 import scala.io.Source
 import scala.io.StdIn.readInt
+import scala.io.StdIn
 import scala.io.StdIn.readLine
 import scala.collection.immutable.ListMap
 import scala.util.{Failure, Success, Try} // more functional exception handling
@@ -69,7 +70,7 @@ object MyApp extends App {
     //printMap(mapdata)
     //mnuShowPoints(currentPoints) // calls function mnuShowPoints, which invokes function currentPoints
     print("Top drivers each season:\n")
-    displayKeyVals(sortYear(getTopDriver()))
+    displayKeyVals(sortYear(getTopDriverSeason()))
     //sortYear(displayKeyVals(getTopDriver()))
     true
   }
@@ -104,8 +105,10 @@ object MyApp extends App {
 
   def handleSix(): Boolean = {
     //displayKeyVals(mapdata)
-    val totalPoints = getTotalDriverPoints("Max Verstappen")
-    print(totalPoints)
+    //val totalPoints = getTotalDriverPoints("Hilton")
+    //print(totalPoints)
+    //val input: String = StdIn.readLine()
+    getTopDriver("Max Verstappen")
     true
   }
 
@@ -250,7 +253,7 @@ object MyApp extends App {
   }
 
   // Function to find the top driver
-  def getTopDriver(): Map[Int, List[(String, Float, Int)]] = {
+  def getTopDriverSeason(): Map[Int, List[(String, Float, Int)]] = {
     loopMapKeys(mapdata, (k, v) => {
       val topDriver = v.foldLeft(v.head) { (currTop, currDri) =>
         if (currDri._2 > currTop._2) currDri else currTop
@@ -259,23 +262,6 @@ object MyApp extends App {
     })
   }
 
-  def getTotalDriverPoints(input: String): (String, Float) = {
-    // Find all points for the given driver name
-    val totalPoints = mapdata.flatMap { case (k, v) =>
-      v.filter { case (driverName, _, _) => driverName.toLowerCase() == input.toLowerCase() } // Filter for matching driver
-        .map { case (_, points, _) => points } // Extract the points for the matching driver
-    }.sum  // Sum the points
-
-    // Check if we found any points for the driver
-    if (totalPoints == 0f && !mapdata.exists { case (_, v) => v.exists { case (driverName, _, _) => driverName.toLowerCase() == input.toLowerCase() } }) {
-      // Driver doesn't exist in the data
-      println(s"Driver '$input' not found.")
-      (input, 0f)  // You can also return None or another indication if you'd like
-    } else {
-      // Driver exists or has points (even if 0 points)
-      (input, totalPoints)
-    }
-  }
 
   def getTotal(tupPos: Int): Map[Int, Float] = {
     mapdata.map { case (k, v) =>
@@ -313,9 +299,33 @@ object MyApp extends App {
     }
   }
 
+  def getTopDriver(input: String): (String, Float) = {
+    //val driverExists = mapdata.values.exists(_.exists(_._1.toLowerCase == searchString.toLowerCase))
+    // checking if user entered only a second name
+    val result = input.split(" ", 2) match {
+      case Array(_, afterSpace) => afterSpace // Extract the part after the first space
+      case _ => input // No space found in the input
+    }
 
+    // checking if driver exists and also storing driver formatted name in val
+    val driverExists = mapdata.values
+      .flatMap(_.filter(_._1.toLowerCase == input.toLowerCase)) // search for matching value
+      .map(_._1) // extract string
+      .headOption // get first match
 
-  // *******************************************************************************************************************
+    // if driverExists is not none then:
+    if(driverExists.isDefined){
+      val total: Float = (for {
+        (_, list) <- mapdata
+        tuple <- list if tuple._1 == driverExists.get
+      } yield tuple._2).sum
+      print(driverExists.get, total)
+      (driverExists.get, total)
+    }else {
+      ("", 0)
+    }
+  }
+
 
 }
 
