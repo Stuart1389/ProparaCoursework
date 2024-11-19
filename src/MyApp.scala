@@ -6,6 +6,7 @@ import scala.io.Source
 import scala.io.StdIn.readInt
 import scala.io.StdIn.readLine
 import scala.collection.immutable.ListMap
+import scala.util.{Try,Success,Failure} // functional exception handling
 
 object MyApp extends App {
 
@@ -21,7 +22,7 @@ object MyApp extends App {
   // for each menu item:
   // key is an Int, the value that will be read from the input
   // value is a function () => Boolean, i.e. no params and returns Boolean
-  val actionMap = Map[Int, () => Boolean](1 -> handleOne, 2 -> handleTwo, 3 -> handleThree)
+  val actionMap = Map[Int, () => Boolean](1 -> handleOne, 2 -> handleTwo, 3 -> handleThree, 4 -> handleFour, 5 -> handleFive, 6 -> handleSix, 7 -> handleQuit)
 
   // loop to read input and invoke menu option
   // uses function readOption to show menu and read input
@@ -72,9 +73,9 @@ object MyApp extends App {
   }
 
   def handleTwo(): Boolean = {
-    //mnuShowPointsForTeam(currentPointsForTeam)
-    displayKeyVals(mapdata)
-    true
+    println("Enter a season to see stats:")
+    sortYear(mapdata).keys.foreach(println)
+    checkInt(getSeason)
   }
 
   def handleThree(): Boolean = {
@@ -82,9 +83,46 @@ object MyApp extends App {
     false
   }
 
+  def handleFour(): Boolean = {
+    println("selected quit") // returns false so loop terminates
+    false
+  }
+
+  def handleFive(): Boolean = {
+    println("selected quit") // returns false so loop terminates
+    false
+  }
+
+  def handleSix(): Boolean = {
+    displayKeyVals(mapdata)
+    true
+  }
+
+  def handleQuit(): Boolean = {
+    println("selected quit") // returns false so loop terminates
+    false
+  }
+
 
   // *******************************************************************************************************************
   // UTILITY FUNCTIONS
+
+
+  def checkInt(f: Int => Map[Int, List[(String, Float, Int)]]): Boolean = {
+    // Attempt to read and parse the input as an integer
+    val result = Try(scala.io.StdIn.readInt())
+
+    result match {
+      case Success(value) =>
+        // If the input is a valid integer, apply the function `f`
+        displayKeyVals(sortYear(f(value)))
+        true
+      case Failure(_) =>
+        // If an exception occurs (e.g., input is not a valid number), print the error message
+        println("Please enter a valid number")
+        true
+    }
+  }
 
   def toTuple(input: List[String]): List[(String, Float, Int)] = {
     input.map { entry =>
@@ -189,6 +227,15 @@ object MyApp extends App {
       }
       k -> List(topDriver)  // Wrap topDriver in a list
     })
+  }
+
+  def getSeason(seasonVal: Int): Map[Int, List[(String, Float, Int)]] = {
+    mapdata.get(seasonVal) match {
+      case Some(data) => Map(seasonVal -> data)  // If found, return a map with the season value and corresponding data
+      case None =>
+        println("Season not found")
+        Map()// If not found, return an empty map
+    }
   }
 
 
