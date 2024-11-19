@@ -103,7 +103,9 @@ object MyApp extends App {
   }
 
   def handleSix(): Boolean = {
-    displayKeyVals(mapdata)
+    //displayKeyVals(mapdata)
+    val totalPoints = getTotalDriverPoints("Max Verstappen")
+    print(totalPoints)
     true
   }
 
@@ -116,7 +118,6 @@ object MyApp extends App {
   // *******************************************************************************************************************
   // UTILITY FUNCTIONS
 
-  @tailrec
   def checkInt(notMenu: Boolean = true): Int = {
     if (notMenu) println("Type 0 to cancel\nPlease enter a number:")
 
@@ -256,6 +257,24 @@ object MyApp extends App {
       }
       k -> List(topDriver)  // Wrap topDriver in a list
     })
+  }
+
+  def getTotalDriverPoints(input: String): (String, Float) = {
+    // Find all points for the given driver name
+    val totalPoints = mapdata.flatMap { case (k, v) =>
+      v.filter { case (driverName, _, _) => driverName.toLowerCase() == input.toLowerCase() } // Filter for matching driver
+        .map { case (_, points, _) => points } // Extract the points for the matching driver
+    }.sum  // Sum the points
+
+    // Check if we found any points for the driver
+    if (totalPoints == 0f && !mapdata.exists { case (_, v) => v.exists { case (driverName, _, _) => driverName.toLowerCase() == input.toLowerCase() } }) {
+      // Driver doesn't exist in the data
+      println(s"Driver '$input' not found.")
+      (input, 0f)  // You can also return None or another indication if you'd like
+    } else {
+      // Driver exists or has points (even if 0 points)
+      (input, totalPoints)
+    }
   }
 
   def getTotal(tupPos: Int): Map[Int, Float] = {
