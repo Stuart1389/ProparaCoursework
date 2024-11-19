@@ -104,11 +104,13 @@ object MyApp extends App {
   }
 
   def handleSix(): Boolean = {
-    //displayKeyVals(mapdata)
-    //val totalPoints = getTotalDriverPoints("Hilton")
-    //print(totalPoints)
-    //val input: String = StdIn.readLine()
-    getTopDriver("Versdtappen dd")
+    print("Please enter a drivers full or last name:\n")
+    val input: String = StdIn.readLine()
+    val selectedDriver = selectDriver(input)
+    selectedDriver match {
+      case (_, _, true) => println(s"Driver: ${selectedDriver._1} has ${selectedDriver._2} points!")
+      case _ => print("Driver not found\n")
+    }
     true
   }
 
@@ -193,14 +195,13 @@ object MyApp extends App {
   def displayKeyVals(value: Map[Int, List[(String, Float, Int)]]): Unit = {
     // Call sort map to sort keys by value
     val sortedMap = sortYear(value)
-
     // Iterate over the sorted map
     for ((k, v) <- sortedMap) {
       println(s"$k")
       // Join driver information without spaces between entries
       println(v.map {
         case (driver, score, wins) =>
-          s"Driver: $driver, Score: $score, Wins: $wins"
+          s"Driver: $driver, Score: ${if (score == score.toInt) score.toInt else f"$score%.1f"}, Wins: $wins"
       }.mkString("\n")) // Join by newline to separate each driver
     }
   }
@@ -212,7 +213,7 @@ object MyApp extends App {
     // Iterate over the sorted map
     for ((k, v) <- sortedMap) {
       // Print the value as Int if it's a whole number (no decimal)
-      println(s"$k - ${if (v == v.toInt) v.toInt else v}")
+      println(s"$k - ${if (v == v.toInt) v.toInt else f"$v%.1f"}")
     }
   }
 
@@ -299,12 +300,11 @@ object MyApp extends App {
     }
   }
 
-  def getTopDriver(input: String): (String, Float) = {
-    //val driverExists = mapdata.values.exists(_.exists(_._1.toLowerCase == searchString.toLowerCase))
-    // checking if user entered only a second name
-    // checking if driver exists and also storing driver formatted name in val
+  def selectDriver(input: String): (String, Float, Boolean) = {
+    // checking if user entered full or second name only
     val driverExists = input.split(" ", 2) match {
-      case Array(_, inputContSpace) =>
+      // checking if driver exists and also storing driver formatted name in val
+      case Array(_, _) =>
         mapdata.values
           .flatMap(_.filter(_._1.toLowerCase == input.toLowerCase)) // Search for exact match
           .map(_._1) // Extract matching string
@@ -318,19 +318,16 @@ object MyApp extends App {
           .headOption // Get first match, or None if no match
     }
 
-
-
-
     // if driverExists is not none then:
     if(driverExists.isDefined){
       val total: Float = (for {
         (_, list) <- mapdata
         tuple <- list if tuple._1 == driverExists.get
       } yield tuple._2).sum
-      print(driverExists.get, total)
-      (driverExists.get, total)
+      //print(driverExists.get, total)
+      (driverExists.get, total, true)
     }else {
-      ("", 0)
+      ("", 0, false)
     }
   }
 
