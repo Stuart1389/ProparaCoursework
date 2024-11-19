@@ -108,7 +108,7 @@ object MyApp extends App {
     //val totalPoints = getTotalDriverPoints("Hilton")
     //print(totalPoints)
     //val input: String = StdIn.readLine()
-    getTopDriver("Max Verstappen")
+    getTopDriver("Versdtappen dd")
     true
   }
 
@@ -302,16 +302,24 @@ object MyApp extends App {
   def getTopDriver(input: String): (String, Float) = {
     //val driverExists = mapdata.values.exists(_.exists(_._1.toLowerCase == searchString.toLowerCase))
     // checking if user entered only a second name
-    val result = input.split(" ", 2) match {
-      case Array(_, afterSpace) => afterSpace // Extract the part after the first space
-      case _ => input // No space found in the input
+    // checking if driver exists and also storing driver formatted name in val
+    val driverExists = input.split(" ", 2) match {
+      case Array(_, inputContSpace) =>
+        mapdata.values
+          .flatMap(_.filter(_._1.toLowerCase == input.toLowerCase)) // Search for exact match
+          .map(_._1) // Extract matching string
+          .headOption // Get first match
+      case _ =>
+        mapdata.values
+          .flatMap(_.filter(entry =>
+            entry._1.toLowerCase.split(" ", 2).lift(1).contains(input.toLowerCase) // Match second part of split
+          ))
+          .map(_._1) // Extract matching string
+          .headOption // Get first match, or None if no match
     }
 
-    // checking if driver exists and also storing driver formatted name in val
-    val driverExists = mapdata.values
-      .flatMap(_.filter(_._1.toLowerCase == input.toLowerCase)) // search for matching value
-      .map(_._1) // extract string
-      .headOption // get first match
+
+
 
     // if driverExists is not none then:
     if(driverExists.isDefined){
