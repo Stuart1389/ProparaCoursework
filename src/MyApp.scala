@@ -11,6 +11,11 @@ object MyApp extends App {
 
   // *******************************************************************************************************************
   // application logic
+  // Creating short types
+  type mapTupleList = List[(String, Float, Int)]
+  type mapTuple = (String, Float, Int)
+  type mapEither = Either[Map[Int,mapTupleList], Map[Int, mapTuple]]
+
 
   // read data from file
   val mapdata = readFile("data.txt")
@@ -136,8 +141,9 @@ object MyApp extends App {
 
    */
 
-  def displayKeyVals(map: Map[Int, Any]): Unit = {
-    for ((k, v) <- map) { // for each map and key pair in map
+  def displayKeyVals(map: Map[Int, Either[(String, Float, Int), List[(String, Float, Int)]]]): Unit = {
+    val formattedMap = formatTuples(map)
+    for ((k, v) <- formattedMap) { // for each map and key pair in map
       println(s"$k - $v") // print key - map
     }
   }
@@ -201,3 +207,21 @@ object MyApp extends App {
 }
 
 // def formatTuple(map: Map[Int, Any]): Map[Int, Either[(String, Float, Int), List[(String, Float, Int)]]] = {
+
+/*
+  def loopMapKeys(): Map[Int, Any] = {
+
+  }
+
+  def getTopDriver(): Map[Int, (String, Float, Int)] = {
+    val result = for ((k, v) <- mapdata) yield { // for each value in map
+      val curWinner = v.foldLeft(v.head) { (currTop, currDri) => // fold left, accumulator start first driver
+        if (currDri._2 > currTop._2) currDri else currTop // check if current driver has higher points than current max
+      }
+      k -> curWinner // return current winner for each key
+    }
+    //print(result)
+    result
+  }
+
+ */
