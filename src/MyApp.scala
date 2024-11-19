@@ -2,11 +2,12 @@
   * Created by jim on 06/11/2016.
   */
 
+import scala.annotation.tailrec
 import scala.io.Source
 import scala.io.StdIn.readInt
 import scala.io.StdIn.readLine
 import scala.collection.immutable.ListMap
-import scala.util.{Try,Success,Failure} // more functional exception handling
+import scala.util.{Failure, Success, Try} // more functional exception handling
 
 object MyApp extends App {
 
@@ -90,8 +91,9 @@ object MyApp extends App {
   }
 
   def handleFour(): Boolean = {3
-    println("selected quit") // returns false so loop terminates
-    false
+    print("Average points per season:\n")
+    displayKeyValsSingle(getAverage())
+    true
   }
 
   def handleFive(): Boolean = {
@@ -114,7 +116,7 @@ object MyApp extends App {
   // *******************************************************************************************************************
   // UTILITY FUNCTIONS
 
-
+  @tailrec
   def checkInt(notMenu: Boolean = true): Int = {
     if (notMenu) println("Type 0 to cancel\nPlease enter a number:")
 
@@ -265,6 +267,21 @@ object MyApp extends App {
         })
       }
       k -> total // Map the key to the computed total
+    }
+  }
+
+  def getAverage(): Map[Int, Float] = {
+    val total = getTotal(2)  // Assuming getTotal returns Map[Int, Float]
+
+    mapdata.map { case (k, v) =>
+      // Extract the total for the key k (use a default value of 1f if key not found)
+      val totalValue = total.getOrElse(k, 1f)
+
+      // Calculate the average (use totalValue directly here)
+      val average = totalValue / v.length
+
+      // Return the key and the average value
+      k -> average
     }
   }
 
