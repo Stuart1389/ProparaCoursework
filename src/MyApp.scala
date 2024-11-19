@@ -6,7 +6,7 @@ import scala.io.Source
 import scala.io.StdIn.readInt
 import scala.io.StdIn.readLine
 import scala.collection.immutable.ListMap
-import scala.util.{Try,Success,Failure} // functional exception handling
+import scala.util.{Try,Success,Failure} // more functional exception handling
 
 object MyApp extends App {
 
@@ -42,12 +42,13 @@ object MyApp extends App {
     println(
       """|Please select one of the following:
         |  1 - show winner for each season
-        |  2 - show points for a season
+        |  2 - show stats for a season
         |  3 - show total wins for each season
         |  4 - show average points for each season
-        |  5 - show total number of points for each season
-        |  6 - quit""".stripMargin)
-    readInt()
+        |  5 - show total number of points for each season DEL show points asc
+        |  6 - show a drivers total points
+        |  7 - quit""".stripMargin)
+    checkInt(notMenu = false)
   }
 
   // invokes selected menu option
@@ -75,22 +76,28 @@ object MyApp extends App {
   def handleTwo(): Boolean = {
     println("Enter a season to see stats:")
     sortYear(mapdata).keys.foreach(println)
-    checkInt(getSeason)
+    val selSeason = checkInt()
+    if (selSeason != 0){
+      displayKeyVals(sortYear(getSeason(selSeason)))
+    }
+    true
   }
 
   def handleThree(): Boolean = {
-    println("selected quit") // returns false so loop terminates
-    false
+    print("Wins per season:\n")
+    displayKeyValsSingle(getTotal(3))
+    true
   }
 
-  def handleFour(): Boolean = {
+  def handleFour(): Boolean = {3
     println("selected quit") // returns false so loop terminates
     false
   }
 
   def handleFive(): Boolean = {
-    println("selected quit") // returns false so loop terminates
-    false
+    print("Points per season:\n")
+    displayKeyValsSingle(getTotal(2), invert = true)
+    true
   }
 
   def handleSix(): Boolean = {
@@ -108,22 +115,23 @@ object MyApp extends App {
   // UTILITY FUNCTIONS
 
 
-  def checkInt(f: Int => Map[Int, List[(String, Float, Int)]]): Boolean = {
-    // Attempt to read and parse the input as an integer
-    val result = Try(scala.io.StdIn.readInt())
+  def checkInt(notMenu: Boolean = true): Int = {
+    if (notMenu) println("Type 0 to cancel\nPlease enter a number:")
 
-    result match {
-      case Success(value) =>
-        // If the input is a valid integer, apply the function `f`
-        displayKeyVals(sortYear(f(value)))
-        true
+    Try(scala.io.StdIn.readInt()) match {
+      case Success(0) if notMenu =>
+        println("Operation canceled.")
+        0
+      case Success(value) => value
       case Failure(_) =>
-        // If an exception occurs (e.g., input is not a valid number), print the error message
-        println("Please enter a valid number")
-        true
+        if (!notMenu) readOption // Reprint the menu and retry for menu input
+        else {
+          println("Invalid input. Please try again.")
+          checkInt(notMenu)
+        }
     }
   }
-
+  // Converts values from string into a list of tuples for Map[Int, list[(etc)]]
   def toTuple(input: List[String]): List[(String, Float, Int)] = {
     input.map { entry =>
       val parts = entry.split(": ")
@@ -176,9 +184,9 @@ object MyApp extends App {
 
    */
 
-  def displayKeyVals(map: Map[Int, List[(String, Float, Int)]]): Unit = {
+  def displayKeyVals(value: Map[Int, List[(String, Float, Int)]]): Unit = {
     // Call sort map to sort keys by value
-    val sortedMap = sortYear(map)
+    val sortedMap = sortYear(value)
 
     // Iterate over the sorted map
     for ((k, v) <- sortedMap) {
@@ -188,6 +196,17 @@ object MyApp extends App {
         case (driver, score, wins) =>
           s"Driver: $driver, Score: $score, Wins: $wins"
       }.mkString("\n")) // Join by newline to separate each driver
+    }
+  }
+
+  def displayKeyValsSingle(value: Map[Int, Float], invert: Boolean = false): Unit = {
+    // Sort the map with or without inversion
+    val sortedMap = sortYearFloat(value, invert)
+
+    // Iterate over the sorted map
+    for ((k, v) <- sortedMap) {
+      // Print the value as Int if it's a whole number (no decimal)
+      println(s"$k - ${if (v == v.toInt) v.toInt else v}")
     }
   }
 
@@ -201,6 +220,14 @@ object MyApp extends App {
     // see http://alvinalexander.com/scala/how-to-sort-map-in-scala-key-value-sortby-sortwith
     //print("Listmap:", ListMap(value.toSeq.sortWith(_._1 > _._1): _*))
     ListMap(value.toSeq.sortWith(_._1 > _._1): _*)
+  }
+
+  def sortYearFloat(value: Map[Int, Float], invert: Boolean = false): Map[Int, Float] = {
+    if(invert){
+      ListMap(value.toSeq.sortWith(_._2 > _._2): _*)
+    } else {
+      ListMap(value.toSeq.sortWith(_._1 > _._1): _*)
+    }
   }
 
 /*
@@ -227,6 +254,18 @@ object MyApp extends App {
       }
       k -> List(topDriver)  // Wrap topDriver in a list
     })
+  }
+
+  def getTotal(tupPos: Int): Map[Int, Float] = {
+    mapdata.map { case (k, v) =>
+      val total = v.foldLeft(0f) { (curTotal, elem) =>
+        curTotal + (tupPos match {
+          case 2 => elem._2   // Add Float value from the second field of the tuple
+          case 3 => elem._3   // Add Int value from the third field (no conversion needed)
+        })
+      }
+      k -> total // Map the key to the computed total
+    }
   }
 
   def getSeason(seasonVal: Int): Map[Int, List[(String, Float, Int)]] = {
