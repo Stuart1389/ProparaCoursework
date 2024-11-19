@@ -11,16 +11,11 @@ object MyApp extends App {
 
   // *******************************************************************************************************************
   // application logic
-  // Creating short types
-  type mapTupleList = List[(String, Float, Int)]
-  type mapTuple = (String, Float, Int)
-  type mapEither = Either[Map[Int,mapTupleList], Map[Int, mapTuple]]
-
 
   // read data from file
   val mapdata = readFile("data.txt")
   // print data to check it's been read in correctly
-  println(mapdata)
+  //println(mapdata)
 
   // define menu options as a Map of actions
   // for each menu item:
@@ -72,11 +67,13 @@ object MyApp extends App {
     //mnuShowPoints(currentPoints) // calls function mnuShowPoints, which invokes function currentPoints
     print("Top drivers each season:\n")
     displayKeyVals(sortYear(getTopDriver()))
+    //sortYear(displayKeyVals(getTopDriver()))
     true
   }
 
   def handleTwo(): Boolean = {
     //mnuShowPointsForTeam(currentPointsForTeam)
+    displayKeyVals(mapdata)
     true
   }
 
@@ -141,10 +138,18 @@ object MyApp extends App {
 
    */
 
-  def displayKeyVals(map: Map[Int, Either[(String, Float, Int), List[(String, Float, Int)]]]): Unit = {
-    val formattedMap = formatTuples(map)
-    for ((k, v) <- formattedMap) { // for each map and key pair in map
-      println(s"$k - $v") // print key - map
+  def displayKeyVals(map: Map[Int, List[(String, Float, Int)]]): Unit = {
+    // Call sort map to sort keys by value
+    val sortedMap = sortYear(map)
+
+    // Iterate over the sorted map
+    for ((k, v) <- sortedMap) {
+      println(s"$k")
+      // Join driver information without spaces between entries
+      println(v.map {
+        case (driver, score, wins) =>
+          s"Driver: $driver, Score: $score, Wins: $wins"
+      }.mkString("\n")) // Join by newline to separate each driver
     }
   }
 
@@ -153,9 +158,10 @@ object MyApp extends App {
   // each of these performs the required operation on the data and returns
   // the results to be displayed - does not interact with user
 
-  def sortYear(value:Map[Int, Any]): Map[Int, Any] = {
+  def sortYear(value:Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
     // sort map by value in descending order -
     // see http://alvinalexander.com/scala/how-to-sort-map-in-scala-key-value-sortby-sortwith
+    //print("Listmap:", ListMap(value.toSeq.sortWith(_._1 > _._1): _*))
     ListMap(value.toSeq.sortWith(_._1 > _._1): _*)
   }
 
@@ -176,28 +182,13 @@ object MyApp extends App {
   }
 
   // Function to find the top driver
-  def getTopDriver(): Map[Int, (String, Float, Int)] = {
+  def getTopDriver(): Map[Int, List[(String, Float, Int)]] = {
     loopMapKeys(mapdata, (k, v) => {
-      val topDriver = v.reduceLeft { (currTop, currDri) =>
+      val topDriver = v.foldLeft(v.head) { (currTop, currDri) =>
         if (currDri._2 > currTop._2) currDri else currTop
       }
-      k -> topDriver
+      k -> List(topDriver)  // Wrap topDriver in a list
     })
-  }
-
-  def insertIntoTuple(tuple: (String, Float, Int)): (String, String, String) = {
-    ("Driver: " + tuple._1, "Score: " + tuple._2.toString, "Wins: " + tuple._3.toString)
-  }
-
-  def formatTuples(map: Map[Int, Either[(String, Float, Int), List[(String, Float, Int)]]]): Map[Int, Either[(String, String, String), List[(String, String, String)]]] = {
-    map.map { case (key, value) =>
-      value match {
-        case Left(tuple) =>
-          key -> Left(insertIntoTuple(tuple))
-        case Right(list) =>
-          key -> Right(list.map(insertIntoTuple))
-      }
-    }
   }
 
 
@@ -222,6 +213,18 @@ object MyApp extends App {
     }
     //print(result)
     result
+  }
+
+  // Function to format the tuple as strings
+  def insertIntoTuple(tuple: (String, Float, Int)): (String, String, String) = {
+    ("Driver: " + tuple._1, "Score: " + tuple._2.toString, "Wins: " + tuple._3.toString)
+  }
+
+  // Function to format each tuple in the map
+  def formatTuples(map: Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, String, String)]] = {
+    map.map { case (key, value) =>
+      key -> value.map(insertIntoTuple) // Apply insertIntoTuple to each tuple in the list
+    }
   }
 
  */
