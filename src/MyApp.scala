@@ -47,7 +47,7 @@ object MyApp extends App {
         |  2 - show stats for a season
         |  3 - show total wins for each season
         |  4 - show average points for each season
-        |  5 - show total number of points for each season DEL show points asc
+        |  5 - show total number of points per season ranked by total points
         |  6 - show a drivers total points
         |  7 - quit""".stripMargin)
     checkInt(notMenu = false)
@@ -126,22 +126,6 @@ object MyApp extends App {
   // *******************************************************************************************************************
   // UTILITY FUNCTIONS
 
-  def checkInt(notMenu: Boolean = true): Int = {
-    if (notMenu) println("Type 0 to cancel\nPlease enter a number:")
-
-    Try(scala.io.StdIn.readInt()) match {
-      case Success(0) if notMenu =>
-        println("Operation canceled.")
-        0
-      case Success(value) => value
-      case Failure(_) =>
-        if (!notMenu) readOption // Reprint the menu and retry for menu input
-        else {
-          println("Invalid input. Please try again.")
-          checkInt(notMenu)
-        }
-    }
-  }
   // Converts values from string into a list of tuples for Map[Int, list[(etc)]]
   def toTuple(input: List[String]): List[(String, Float, Int)] = {
     input.map { entry =>
@@ -179,12 +163,25 @@ object MyApp extends App {
   // invokes the relevant operation function and displays the results
 
 
-  /*
-  def displayResults(map: Map[Int, Any]): = {
 
+  // FUNCTIONS RELATED TO DISPLAYING RESULTS FROM OPERATIONS TO USER
+  def checkInt(notMenu: Boolean = true): Int = {
+    if (notMenu) println("Type 0 to cancel\nPlease enter a number:")
+
+    Try(scala.io.StdIn.readInt()) match {
+      case Success(0) if notMenu =>
+        println("Operation canceled.")
+        0
+      case Success(value) => value
+      case Failure(_) =>
+        if (!notMenu) readOption // Reprint the menu and retry for menu input
+        else {
+          println("Invalid input. Please try again.")
+          checkInt(notMenu)
+        }
+    }
   }
 
-   */
 
   def displayKeyVals(value: Map[Int, List[(String, Float, Int)]]): Unit = {
     // Call sort map to sort keys by value
@@ -231,30 +228,14 @@ object MyApp extends App {
     }
   }
 
-/*
-  def currentPointsForTeam(team: String): (String, Int) = {
-    val points = mapdata.get(team) match{
-      case Some(p) => p
-      case None => 0
-    }
-    (team, points)
-  }
- */
-
-  // Higher-order function to process Map keys
-  def loopMapKeys[T](mapData: Map[Int, List[(String, Float, Int)]],
-                     processFunc: (Int, List[(String, Float, Int)]) => (Int, T)): Map[Int, T] = {
-    mapData.map { case (k, v) => processFunc(k, v) }
-  }
-
   // Function to find the top driver
   def getTopDriverSeason(): Map[Int, List[(String, Float, Int)]] = {
-    loopMapKeys(mapdata, (k, v) => {
+    mapdata.map { case (k, v) =>
       val topDriver = v.foldLeft(v.head) { (currTop, currDri) =>
         if (currDri._2 > currTop._2) currDri else currTop
       }
-      k -> List(topDriver)  // Wrap topDriver in a list
-    })
+      k -> List(topDriver) // Wrap topDriver in a list
+    }
   }
 
 
@@ -348,53 +329,3 @@ object MyApp extends App {
 
 }
 
-
-
-
-
-
-// def formatTuple(map: Map[Int, Any]): Map[Int, Either[(String, Float, Int), List[(String, Float, Int)]]] = {
-
-/*
-  def loopMapKeys(): Map[Int, Any] = {
-
-  }
-
-  def getTopDriver(): Map[Int, (String, Float, Int)] = {
-    val result = for ((k, v) <- mapdata) yield { // for each value in map
-      val curWinner = v.foldLeft(v.head) { (currTop, currDri) => // fold left, accumulator start first driver
-        if (currDri._2 > currTop._2) currDri else currTop // check if current driver has higher points than current max
-      }
-      k -> curWinner // return current winner for each key
-    }
-    //print(result)
-    result
-  }
-
-  // Function to format the tuple as strings
-  def insertIntoTuple(tuple: (String, Float, Int)): (String, String, String) = {
-    ("Driver: " + tuple._1, "Score: " + tuple._2.toString, "Wins: " + tuple._3.toString)
-  }
-
-  // Function to format each tuple in the map
-  def formatTuples(map: Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, String, String)]] = {
-    map.map { case (key, value) =>
-      key -> value.map(insertIntoTuple) // Apply insertIntoTuple to each tuple in the list
-    }
-  }
-
- */
-
-/*
-  def mnuShowPoints(f: () => Map[Int, List[(String, Float, Int)]]) = {
-    f() foreach { case (x, y) => println(s"$x: $y") }
-  }
-
-  def mnuShowPointsForTeam(f: (String) => (String, Int)) = {
-    print("Team>")
-    val data = f(readLine)
-    println(s"${data._1}: ${data._2}")
-  }
-
-
- */
