@@ -123,6 +123,7 @@ object MyApp extends App {
       for (line <- Source.fromFile(filename).getLines()) {
         // for each line
         val splitline = line.split(",").map(_.trim).toList // split line at , and convert to List
+        print(splitline)
         val drivers = toTuple(splitline.tail) // head is key, tail is values. Convert values into list of tuples
         // add element to map buffer
         // splitline is line from file as List, e.g. List(Bayern Munich, 24)
