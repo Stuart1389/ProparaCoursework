@@ -222,9 +222,9 @@ object MyApp extends App {
     val sortedMap = sortYear(operatedMap)
     // Iterate through map
     for ((k, v) <- sortedMap) {
-      println(s"$k") // Prints the key on its own line
+      println(s"$k") // Prints the key on its own line (season )
       // print each drivers stats on a new line before respective season
-      println(v.map {
+      println(v.sortBy(-_._2).map { // sort tuples by float, aka sort drivers by their points
         case (driver, score, wins) => // tuple(String, Float, Int)
           s"Driver: $driver, Score: ${if (score == score.toInt) score.toInt else f"$score%.1f"}, Wins: $wins"
       }.mkString("\n")) // Join by newline to separate each driver on own line
