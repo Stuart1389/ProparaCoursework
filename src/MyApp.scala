@@ -28,11 +28,12 @@ object MyApp extends App {
   // uses function readOption to show menu and read input
   // uses function menu to invoke menu action
   // will terminate if menu returns false
+  if(mapdata.nonEmpty){
     var opt = 0
     do {
       opt = readOption
     } while (menu(opt))
-
+  }
 
   // *******************************************************************************************************************
   // FUNCTIONS FOR MENU
@@ -91,7 +92,7 @@ object MyApp extends App {
   }
 
   def handleSix(): Boolean = {
-    showSelDriver()
+    showSelDriver(true)
     true
   }
 
@@ -123,7 +124,7 @@ object MyApp extends App {
       for (line <- Source.fromFile(filename).getLines()) {
         // for each line
         val splitline = line.split(",").map(_.trim).toList // split line at , and convert to List
-        print(splitline)
+        //print(splitline)
         val drivers = toTuple(splitline.tail) // head is key, tail is values. Convert values into list of tuples
         // add element to map buffer
         // splitline is line from file as List, e.g. List(Bayern Munich, 24)
@@ -146,17 +147,23 @@ object MyApp extends App {
   // FUNCTIONS STARTING CHAIN
   // starts show winner of each season chain
   def showWinner(): Unit = {
-    print("Top drivers each season:\n")
+    print("Top driver for each season:\n")
     displayKeyVals(getTopDriverSeason())
   }
 
   // starts show selected season chain
+  @tailrec
   def showSelSeason(): Unit = {
     println("Enter a season to see stats:")
     sortYear(mapdata).keys.foreach(println) // prints years in order to show user available years
     val selSeason = checkInt() // function gets user input
     if (selSeason != 0){ // 0 backs the user out of the loop
-      displayKeyVals(getSeason(selSeason)) // if user doesn't want to back out then try to get season
+      val seasonMap = getSeason(selSeason)
+      if(seasonMap.isEmpty){ // if season map is empty then user enetered a num which isnt a season
+        showSelSeason() // recursion, ask user for season number
+      } else {
+        displayKeyVals(seasonMap) // if map isnt empty then display season stats
+      }
     }
   }
 
@@ -168,7 +175,7 @@ object MyApp extends App {
 
   // starts average points chain
   def showAveragePoints(): Unit = {
-    print("Average points per season:\n")
+    print("Average points per season ranked:\n")
     displayKeyValsSingle(getAverage())
   }
 
@@ -180,16 +187,22 @@ object MyApp extends App {
   }
 
   // starts show selected drivers points chain
-  def showSelDriver(): Unit = {
-    val uniqueDrivers = getUniqueDrivers(mapdata, List.empty[String]) // gets a list of drivers for the user to select
-    print("Available drivers:\n")
-    uniqueDrivers.foreach(println) // displays above list
+  @tailrec
+  def showSelDriver(firstLoop: Boolean = false): Unit = {
+    if(firstLoop){ // only display available drivers if its the first call, to stop spam
+      val uniqueDrivers = getUniqueDrivers(mapdata, List.empty[String]) // gets a list of drivers for the user to select
+      print("Available drivers:\n")
+      uniqueDrivers.foreach(println) // displays above list
+    }
     print("Please enter a drivers full or last name:\n")
+    print("Or type \"exit\"\n")
     val input: String = StdIn.readLine() // gets user input as a string
-    val selectedDriver = selectDriver(input) // inserts returned value into selectedDriver
-    selectedDriver match {
-      case (_, _, true) => println(s"Driver: ${selectedDriver._1} has ${selectedDriver._2} points!") // if the driver exists then show their points
-      case _ => print("Driver not found\n") // if driver doesn't exist, then let user know
+    if (input.toLowerCase != "exit"){ // check if the user wants to escape loop
+      val selectedDriver = selectDriver(input) // inserts returned value into selectedDriver
+      selectedDriver match {
+        case (_, _, true) => println(s"Driver: ${selectedDriver._1} has ${selectedDriver._2} points!") // if the driver exists then show their points
+        case _ => print("Driver not found\n"); showSelDriver() // if driver doesn't exist, then let user know and recursively call function
+      }
     }
   }
 
@@ -206,9 +219,9 @@ object MyApp extends App {
       case Success(value) => value
       // case for exception below, let user know they entered an invalid input and try again
       case Failure(_) =>
+        println("Invalid input. Please enter a number.")
         if (!notMenu) readOption // if exception happens while in menu, then go back to menu
         else {
-          println("Invalid input. Please try again.")
           checkInt(notMenu) // recursive, repeat until accepted input
         }
     }
@@ -222,7 +235,7 @@ object MyApp extends App {
     val sortedMap = sortYear(operatedMap)
     // Iterate through map
     for ((k, v) <- sortedMap) {
-      println(s"$k") // Prints the key on its own line (season )
+      println(s"Season - $k:") // Prints the key on its own line (season )
       // print each drivers stats on a new line before respective season
       println(v.sortBy(-_._2).map { // sort tuples by float, aka sort drivers by their points
         case (driver, score, wins) => // tuple(String, Float, Int)
@@ -258,20 +271,21 @@ object MyApp extends App {
   // each of these performs the required operation on the data and returns
   // the results to be displayed - does not interact with user
 
-  // Sorting values, kinda a dumb implementation
+  // Sorting values
   def sortYear(value:Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
     // sort map by value in descending order -
     // see http://alvinalexander.com/scala/how-to-sort-map-in-scala-key-value-sortby-sortwith
     // always sort by key
-    ListMap(value.toSeq.sortWith(_._1 > _._1): _*)
+    ListMap(value.toSeq.sortWith(_._1 > _._1): _*) // sort key by key
   }
 
+  // ehhhhhhhhhhhhhhhhhhhhhhhhhh :<(
   def sortYearFloat(value: Map[Int, Float], invert: Boolean = false): Map[Int, Float] = {
     // sort by key or value depending on boolean
     if(invert){
-      ListMap(value.toSeq.sortWith(_._2 > _._2): _*)
+      ListMap(value.toSeq.sortWith(_._2 > _._2): _*) // sort key by values
     } else {
-      ListMap(value.toSeq.sortWith(_._1 > _._1): _*)
+      ListMap(value.toSeq.sortWith(_._1 > _._1): _*) // sort key by key
     }
   }
 
