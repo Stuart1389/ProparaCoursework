@@ -50,7 +50,7 @@ object MyApp extends App {
         |  5 - show total number of points per season ranked by total points
         |  6 - show a drivers total points
         |  7 - quit""".stripMargin)
-    checkInt(notMenu = false)
+    checkInt(notMenu = false) // stops exception if user doesnt enter an int
   }
 
   // invokes selected menu option
@@ -66,6 +66,7 @@ object MyApp extends App {
   }
 
   // handlers for menu options
+  // Each handler calls function to start chain which carries out respective op
   def handleOne(): Boolean = {
     showWinner()
     true
@@ -105,13 +106,14 @@ object MyApp extends App {
   // *******************************************************************************************************************
   // UTILITY FUNCTIONS
 
-  // Converts values from string into a list of tuples for Map[Int, list[(etc)]]
+  // Converts values from string into a list of tuples for Map[Int, list[(String, Float, Int)]]
+  // input is list from readfile
   def toTuple(input: List[String]): List[(String, Float, Int)] = {
     input.map { entry =>
-      val parts = entry.split(": ")
-      val name = parts(0)
-      val numbers = parts(1).split(" ")
-      (name, numbers(0).toFloat, numbers(1).toInt)
+      val parts = entry.split(": ") // splits into 2 parts, b4 and after :
+      val name = parts(0) // name is b4 :
+      val numbers = parts(1).split(" ") // splits numbers into score (b4 " "), and wins (after " ")
+      (name, numbers(0).toFloat, numbers(1).toInt) // return tuple, driver | points | wins
     }
   }
 
@@ -123,12 +125,12 @@ object MyApp extends App {
       for (line <- Source.fromFile(filename).getLines()) {
         // for each line
         val splitline = line.split(",").map(_.trim).toList // split line at , and convert to List
-        val drivers = toTuple(splitline.tail)
+        val drivers = toTuple(splitline.tail) // head is key, tail is values. Convert values into list of tuples
         // add element to map buffer
         // splitline is line from file as List, e.g. List(Bayern Munich, 24)
         // use head as key
         // tail is a list, but need just the first (only in this case) element, so use head of tail and convert to int
-        mapBuffer = mapBuffer ++ Map(splitline.head.toInt -> drivers)
+        mapBuffer = mapBuffer ++ Map(splitline.head.toInt -> drivers) // add key pair to map, key and list of tuples(drivers)
       }
     } catch {
       case ex: Exception => println("Sorry, an exception happened." + ex)
@@ -152,81 +154,90 @@ object MyApp extends App {
   // starts show selected season chain
   def showSelSeason(): Unit = {
     println("Enter a season to see stats:")
-    sortYear(mapdata).keys.foreach(println)
-    val selSeason = checkInt()
-    if (selSeason != 0){
-      displayKeyVals(getSeason(selSeason))
+    sortYear(mapdata).keys.foreach(println) // prints years in order to show user available years
+    val selSeason = checkInt() // function gets user input
+    if (selSeason != 0){ // 0 backs the user out of the loop
+      displayKeyVals(getSeason(selSeason)) // if user doesn't want to back out then try to get season
     }
   }
 
+  // Starts show total wins chain
   def showTotalWins(): Unit = {
     print("Wins per season:\n")
     displayKeyValsSingle(getTotal(3))
   }
 
+  // starts average points chain
   def showAveragePoints(): Unit = {
     print("Average points per season:\n")
     displayKeyValsSingle(getAverage())
   }
 
+  // starts show points per season chain
   def showPointsPS(): Unit = {
     print("Points per season:\n")
+    // invert changes tuple position for the sort (e.g. ._2 or ._3)
     displayKeyValsSingle(getTotal(2), invert = true)
   }
 
+  // starts show selected drivers points chain
   def showSelDriver(): Unit = {
-    val uniqueDrivers = getUniqueDrivers(mapdata, List.empty[String])
+    val uniqueDrivers = getUniqueDrivers(mapdata, List.empty[String]) // gets a list of drivers for the user to select
     print("Available drivers:\n")
-    uniqueDrivers.foreach(println)
+    uniqueDrivers.foreach(println) // displays above list
     print("Please enter a drivers full or last name:\n")
-    val input: String = StdIn.readLine()
-    val selectedDriver = selectDriver(input)
+    val input: String = StdIn.readLine() // gets user input as a string
+    val selectedDriver = selectDriver(input) // inserts returned value into selectedDriver
     selectedDriver match {
-      case (_, _, true) => println(s"Driver: ${selectedDriver._1} has ${selectedDriver._2} points!")
-      case _ => print("Driver not found\n")
+      case (_, _, true) => println(s"Driver: ${selectedDriver._1} has ${selectedDriver._2} points!") // if the driver exists then show their points
+      case _ => print("Driver not found\n") // if driver doesn't exist, then let user know
     }
   }
 
   // FUNCTIONS DISPLAYING RESULTS OF INPUTS AND OPERATIONS
+  // checkInt is used to stop exceptions if user enters an illegal value
   def checkInt(notMenu: Boolean = true): Int = {
-    if (notMenu) println("Type 0 to cancel\nPlease enter a number:")
-
-    Try(scala.io.StdIn.readInt()) match {
-      case Success(0) if notMenu =>
+    if (notMenu) println("Type 0 to cancel\nPlease enter a number:") // dont want to interfere with main menu
+    Try(scala.io.StdIn.readInt()) match { // Try, a more functional approach to exception handling according to docs
+      // cases for successful input with no exception
+      case Success(0) if notMenu => // lets the user break out of the loop
         println("Operation cancelled.")
         0
       case Success(value) => value
+      // case for exception below, let user know they entered an invalid input and try again
       case Failure(_) =>
-        if (!notMenu) readOption // Reprint the menu and retry for menu input
+        if (!notMenu) readOption // if exception happens while in menu, then go back to menu
         else {
           println("Invalid input. Please try again.")
-          checkInt(notMenu)
+          checkInt(notMenu) // recursive, try until accepted input
         }
     }
   }
 
+  // Function displays driver stats when a map with a list of tuples is provided as values
   def displayKeyVals(func: => Map[Int, List[(String, Float, Int)]]): Unit = {
+    // Get the initial map from function argument
     val operatedMap = func
-    // Call sort map to sort keys by value
+    // Call sort map to sort keys by value using map from function
     val sortedMap = sortYear(operatedMap)
-    // Iterate over the sorted map
+    // Iterate through map
     for ((k, v) <- sortedMap) {
-      println(s"$k")
-      // Join driver information without spaces between entries
+      println(s"$k") // Prints the key on its own line
+      // print each drivers stats on a new line before respective season
       println(v.map {
-        case (driver, score, wins) =>
+        case (driver, score, wins) => // tuple(String, Float, Int)
           s"Driver: $driver, Score: ${if (score == score.toInt) score.toInt else f"$score%.1f"}, Wins: $wins"
-      }.mkString("\n")) // Join by newline to separate each driver
+      }.mkString("\n")) // Join by newline to separate each driver on own line
     }
   }
 
+  // Function displays key and value pairs when value is a single value, e.g. total wins ,etc
   def displayKeyValsSingle(func: => Map[Int, Float], invert: Boolean = false): Unit = {
-    // Sort the map with or without inversion
+    // sort map keys or values depending on inverted
     val sortedMap = sortYearFloat(func, invert)
-
-    // Iterate over the sorted map
+    // Iterate through map
     for ((k, v) <- sortedMap) {
-      // Print the value as Int if it's a whole number (no decimal)
+      // Print the value as int if no fp is needed to accurately represent val
       println(s"$k - ${if (v == v.toInt) v.toInt else f"$v%.1f"}")
     }
   }
