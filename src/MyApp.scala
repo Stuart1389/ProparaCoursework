@@ -4,9 +4,7 @@
 
 import scala.annotation.tailrec
 import scala.io.Source
-import scala.io.StdIn.readInt
 import scala.io.StdIn
-import scala.io.StdIn.readLine
 import scala.collection.immutable.ListMap
 import scala.util.{Failure, Success, Try} // more functional exception handling
 
@@ -82,7 +80,7 @@ object MyApp extends App {
     true
   }
 
-  def handleFour(): Boolean = {3
+  def handleFour(): Boolean = {
     showAveragePoints()
     true
   }
@@ -196,6 +194,7 @@ object MyApp extends App {
 
   // FUNCTIONS DISPLAYING RESULTS OF INPUTS AND OPERATIONS
   // checkInt is used to stop exceptions if user enters an illegal value
+  @tailrec
   def checkInt(notMenu: Boolean = true): Int = {
     if (notMenu) println("Type 0 to cancel\nPlease enter a number:") // dont want to interfere with main menu
     Try(scala.io.StdIn.readInt()) match { // Try, a more functional approach to exception handling according to docs
@@ -209,7 +208,7 @@ object MyApp extends App {
         if (!notMenu) readOption // if exception happens while in menu, then go back to menu
         else {
           println("Invalid input. Please try again.")
-          checkInt(notMenu) // recursive, try until accepted input
+          checkInt(notMenu) // recursive, repeat until accepted input
         }
     }
   }
@@ -247,14 +246,16 @@ object MyApp extends App {
   // each of these performs the required operation on the data and returns
   // the results to be displayed - does not interact with user
 
+  // Sorting values, kinda a dumb implementation
   def sortYear(value:Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
     // sort map by value in descending order -
     // see http://alvinalexander.com/scala/how-to-sort-map-in-scala-key-value-sortby-sortwith
-    //print("Listmap:", ListMap(value.toSeq.sortWith(_._1 > _._1): _*))
+    // always sort by key
     ListMap(value.toSeq.sortWith(_._1 > _._1): _*)
   }
 
   def sortYearFloat(value: Map[Int, Float], invert: Boolean = false): Map[Int, Float] = {
+    // sort by key or value depending on boolean
     if(invert){
       ListMap(value.toSeq.sortWith(_._2 > _._2): _*)
     } else {
@@ -262,41 +263,38 @@ object MyApp extends App {
     }
   }
 
-  // Function to find the top driver
+
+  // Function to find the best driver in each season
   def getTopDriverSeason(): Map[Int, List[(String, Float, Int)]] = {
-    mapdata.map { case (k, v) =>
-      val topDriver = v.foldLeft(v.head) { (currTop, currDri) =>
-        if (currDri._2 > currTop._2) currDri else currTop
+    mapdata.map { case (k, v) => // for each key value pair
+      // go through list of tuples, check if current driver has more points than accumulator
+      val topDriver = v.foldLeft(v.head) { (currTop, currDri) => // accumulator starts with first driver
+        if (currDri._2 > currTop._2) currDri else currTop // if so then they're the top bloke
       }
-      k -> List(topDriver) // Wrap topDriver in a list
+      k -> List(topDriver) // put back into a list to use displaykeyvals function
     }
   }
 
-
+  // Function to find the total of something
   def getTotal(tupPos: Int): Map[Int, Float] = {
-    mapdata.map { case (k, v) =>
-      val total = v.foldLeft(0f) { (curTotal, elem) =>
+    mapdata.map { case (k, v) => // for each key value pair
+      val total = v.foldLeft(0f) { (curTotal, elem) => // go through each tuple and set accumulator to float 0
+        // case determines whether to count score (._2/tuple pos 2) or wins (._3/tuple pos 3)
         curTotal + (tupPos match {
-          case 2 => elem._2   // Add Float value from the second field of the tuple
-          case 3 => elem._3   // Add Int value from the third field (no conversion needed)
+          case 2 => elem._2   // add score to accumulator
+          case 3 => elem._3   // add wins to accumulator
         })
       }
-      k -> total // Map the key to the computed total
+      k -> total // Map key to value total
     }
   }
 
   def getAverage(): Map[Int, Float] = {
-    val total = getTotal(2)  // Assuming getTotal returns Map[Int, Float]
-
-    mapdata.map { case (k, v) =>
-      // Extract the total for the key k (use a default value of 1f if key not found)
-      val totalValue = total.getOrElse(k, 1f)
-
-      // Calculate the average (use totalValue directly here)
-      val average = totalValue / v.length
-
-      // Return the key and the average value
-      k -> average
+    val total = getTotal(2) // get map with keys and values as total score from function
+    mapdata.map { case (k, v) => // for each key, value
+      val totalValue = total.getOrElse(k, 1f) // get value from map or default to float 1
+      val average = totalValue / v.length // get average using total and the number of values in og map
+      k -> average // return for each key
     }
   }
 
@@ -340,6 +338,7 @@ object MyApp extends App {
     }
   }
 
+  @tailrec
   def getUniqueDrivers(mapData: Map[Int, List[(String, Float, Int)]], curDrivers: List[String]): List[String] = {
     // Base case: if mapData is empty, return the current drivers
     if (mapData.isEmpty) {
