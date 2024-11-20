@@ -241,6 +241,17 @@ object MyApp extends App {
     }
   }
 
+  // Function to get season from user input
+  def getSeason(seasonVal: Int): Map[Int, List[(String, Float, Int)]] = {
+    // match user input value to keys in map
+    mapdata.get(seasonVal) match {
+      case Some(data) => Map(seasonVal -> data)  // if key exists, return map with key and value
+      case None => // if key doesnt exist let user know
+        println("Season not found")
+        Map() // returns an empty map
+    }
+  }
+
   // *******************************************************************************************************************
   // OPERATION FUNCTIONS
   // each of these performs the required operation on the data and returns
@@ -289,6 +300,7 @@ object MyApp extends App {
     }
   }
 
+  // Function to find average
   def getAverage(): Map[Int, Float] = {
     val total = getTotal(2) // get map with keys and values as total score from function
     mapdata.map { case (k, v) => // for each key, value
@@ -298,67 +310,58 @@ object MyApp extends App {
     }
   }
 
-  def getSeason(seasonVal: Int): Map[Int, List[(String, Float, Int)]] = {
-    mapdata.get(seasonVal) match {
-      case Some(data) => Map(seasonVal -> data)  // If found, return a map with the season value and corresponding data
-      case None =>
-        println("Season not found")
-        Map()// If not found, return an empty map
-    }
-  }
-
+  // Function to select a driver and find their total points in all seasons
   def selectDriver(input: String): (String, Float, Boolean) = {
-    // checking if user entered full or second name only
+    // checking if user input is full or last name
     val driverExists = input.split(" ", 2) match {
       // checking if driver exists and also storing driver formatted name in val
+      // Case for full name and last name matching
       case Array(_, _) =>
         mapdata.values
-          .flatMap(_.filter(_._1.toLowerCase == input.toLowerCase)) // Search for exact match
+          .flatMap(_.filter(_._1.toLowerCase == input.toLowerCase)) // .filter returns a collection with only drivers name tuples
           .map(_._1) // Extract matching string
-          .headOption // Get first match
+          .headOption // Get first match or none
       case _ =>
         mapdata.values
-          .flatMap(_.filter(entry =>
-            entry._1.toLowerCase.split(" ", 2).lift(1).contains(input.toLowerCase) // Match second part of split
+          .flatMap(_.filter(entry => // return a collection using below function
+            // split first and last name, then lift extracts it, .contains checks if last name exists
+            entry._1.toLowerCase.split(" ", 2).lift(1).contains(input.toLowerCase)
           ))
-          .map(_._1) // Extract matching string
-          .headOption // Get first match, or None if no match
+          .map(_._1)
+          .headOption
     }
 
     // if driverExists is not none then:
     if(driverExists.isDefined){
-      val total: Float = (for {
-        (_, list) <- mapdata
-        tuple <- list if tuple._1 == driverExists.get
-      } yield tuple._2).sum
+      val total: Float = (for { // store total points in a float
+        (_, list) <- mapdata // iterate through values
+        tuple <- list if tuple._1 == driverExists.get // if user input is same as driver
+      } yield tuple._2).sum // sum from matching tuples
       //print(driverExists.get, total)
-      (driverExists.get, total, true)
+      (driverExists.get, total, true) // return tuple (name, totalpoints, exists)
     }else {
-      ("", 0, false)
+      ("", 0, false) // otherwise return tuple with no vals
     }
   }
 
   @tailrec
   def getUniqueDrivers(mapData: Map[Int, List[(String, Float, Int)]], curDrivers: List[String]): List[String] = {
-    // Base case: if mapData is empty, return the current drivers
+    // if no more drivers left, aka no more values in mapData to go through
     if (mapData.isEmpty) {
-      //print("cur drivers", curDrivers.sortBy(name => name.split(" ").last))
       curDrivers.sortBy(name => name.split(" ").last) // sort by second name alphabetically
     } else {
-      // Get key and value from the first entry
+      // Get first key, val pair
       val (k, v) = mapData.head
-
-      // Update curDrivers with unique drivers from the current list
-      val accuCurDrivers = v.foldLeft(curDrivers) { (accumulator, tuple) =>
-        val tupDriver = tuple._1
+      // Update curDrivers, adding any new-found drivers
+      val accuCurDrivers = v.foldLeft(curDrivers) { (accumulator, tuple) => // go through list of tuples, set accumulator to currently known drivers
+        val tupDriver = tuple._1 // Set val to driver from tuple
+        // check if driver is in accumulator, if not then prepend them
         if (!accumulator.contains(tupDriver)) tupDriver :: accumulator else accumulator
       }
-
-      // Recur with the remaining mapData and updated curDrivers
+      // recursion, use mapData.tail to go through keys until no more left
       getUniqueDrivers(mapData.tail, accuCurDrivers)
     }
   }
-
 
 }
 
