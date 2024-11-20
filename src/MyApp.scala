@@ -67,53 +67,32 @@ object MyApp extends App {
 
   // handlers for menu options
   def handleOne(): Boolean = {
-    //printMap(mapdata)
-    //mnuShowPoints(currentPoints) // calls function mnuShowPoints, which invokes function currentPoints
-    print("Top drivers each season:\n")
-    displayKeyVals(sortYear(getTopDriverSeason()))
-    //sortYear(displayKeyVals(getTopDriver()))
+    showWinner()
     true
   }
 
   def handleTwo(): Boolean = {
-    println("Enter a season to see stats:")
-    sortYear(mapdata).keys.foreach(println)
-    val selSeason = checkInt()
-    if (selSeason != 0){
-      displayKeyVals(sortYear(getSeason(selSeason)))
-    }
+    showSelSeason()
     true
   }
 
   def handleThree(): Boolean = {
-    print("Wins per season:\n")
-    displayKeyValsSingle(getTotal(3))
+    showTotalWins()
     true
   }
 
   def handleFour(): Boolean = {3
-    print("Average points per season:\n")
-    displayKeyValsSingle(getAverage())
+    showAveragePoints()
     true
   }
 
   def handleFive(): Boolean = {
-    print("Points per season:\n")
-    displayKeyValsSingle(getTotal(2), invert = true)
+    showPointsPS()
     true
   }
 
   def handleSix(): Boolean = {
-    val uniqueDrivers = getUniqueDrivers(mapdata, List.empty[String])
-    print("Available drivers:\n")
-    uniqueDrivers.foreach(println)
-    print("Please enter a drivers full or last name:\n")
-    val input: String = StdIn.readLine()
-    val selectedDriver = selectDriver(input)
-    selectedDriver match {
-      case (_, _, true) => println(s"Driver: ${selectedDriver._1} has ${selectedDriver._2} points!")
-      case _ => print("Driver not found\n")
-    }
+    showSelDriver()
     true
   }
 
@@ -163,14 +142,58 @@ object MyApp extends App {
   // invokes the relevant operation function and displays the results
 
 
+  // FUNCTIONS STARTING CHAIN
+  // starts show winner of each season chain
+  def showWinner(): Unit = {
+    print("Top drivers each season:\n")
+    displayKeyVals(getTopDriverSeason())
+  }
 
-  // FUNCTIONS RELATED TO DISPLAYING RESULTS FROM OPERATIONS TO USER
+  // starts show selected season chain
+  def showSelSeason(): Unit = {
+    println("Enter a season to see stats:")
+    sortYear(mapdata).keys.foreach(println)
+    val selSeason = checkInt()
+    if (selSeason != 0){
+      displayKeyVals(getSeason(selSeason))
+    }
+  }
+
+  def showTotalWins(): Unit = {
+    print("Wins per season:\n")
+    displayKeyValsSingle(getTotal(3))
+  }
+
+  def showAveragePoints(): Unit = {
+    print("Average points per season:\n")
+    displayKeyValsSingle(getAverage())
+  }
+
+  def showPointsPS(): Unit = {
+    print("Points per season:\n")
+    displayKeyValsSingle(getTotal(2), invert = true)
+  }
+
+  def showSelDriver(): Unit = {
+    val uniqueDrivers = getUniqueDrivers(mapdata, List.empty[String])
+    print("Available drivers:\n")
+    uniqueDrivers.foreach(println)
+    print("Please enter a drivers full or last name:\n")
+    val input: String = StdIn.readLine()
+    val selectedDriver = selectDriver(input)
+    selectedDriver match {
+      case (_, _, true) => println(s"Driver: ${selectedDriver._1} has ${selectedDriver._2} points!")
+      case _ => print("Driver not found\n")
+    }
+  }
+
+  // FUNCTIONS DISPLAYING RESULTS OF INPUTS AND OPERATIONS
   def checkInt(notMenu: Boolean = true): Int = {
     if (notMenu) println("Type 0 to cancel\nPlease enter a number:")
 
     Try(scala.io.StdIn.readInt()) match {
       case Success(0) if notMenu =>
-        println("Operation canceled.")
+        println("Operation cancelled.")
         0
       case Success(value) => value
       case Failure(_) =>
@@ -182,10 +205,10 @@ object MyApp extends App {
     }
   }
 
-
-  def displayKeyVals(value: Map[Int, List[(String, Float, Int)]]): Unit = {
+  def displayKeyVals(func: => Map[Int, List[(String, Float, Int)]]): Unit = {
+    val operatedMap = func
     // Call sort map to sort keys by value
-    val sortedMap = sortYear(value)
+    val sortedMap = sortYear(operatedMap)
     // Iterate over the sorted map
     for ((k, v) <- sortedMap) {
       println(s"$k")
@@ -197,9 +220,9 @@ object MyApp extends App {
     }
   }
 
-  def displayKeyValsSingle(value: Map[Int, Float], invert: Boolean = false): Unit = {
+  def displayKeyValsSingle(func: => Map[Int, Float], invert: Boolean = false): Unit = {
     // Sort the map with or without inversion
-    val sortedMap = sortYearFloat(value, invert)
+    val sortedMap = sortYearFloat(func, invert)
 
     // Iterate over the sorted map
     for ((k, v) <- sortedMap) {
