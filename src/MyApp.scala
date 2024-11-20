@@ -104,6 +104,9 @@ object MyApp extends App {
   }
 
   def handleSix(): Boolean = {
+    val uniqueDrivers = getUniqueDrivers(mapdata, List.empty[String])
+    print("Available drivers:\n")
+    uniqueDrivers.foreach(println)
     print("Please enter a drivers full or last name:\n")
     val input: String = StdIn.readLine()
     val selectedDriver = selectDriver(input)
@@ -175,15 +178,6 @@ object MyApp extends App {
   // each of these functions accepts user input if required for an operation,
   // invokes the relevant operation function and displays the results
 
-  def mnuShowPoints(f: () => Map[Int, List[(String, Float, Int)]]) = {
-    f() foreach { case (x, y) => println(s"$x: $y") }
-  }
-
-  def mnuShowPointsForTeam(f: (String) => (String, Int)) = {
-    print("Team>")
-    val data = f(readLine)
-    println(s"${data._1}: ${data._2}")
-  }
 
   /*
   def displayResults(map: Map[Int, Any]): = {
@@ -331,8 +325,33 @@ object MyApp extends App {
     }
   }
 
+  def getUniqueDrivers(mapData: Map[Int, List[(String, Float, Int)]], curDrivers: List[String]): List[String] = {
+    // Base case: if mapData is empty, return the current drivers
+    if (mapData.isEmpty) {
+      //print("cur drivers", curDrivers.sortBy(name => name.split(" ").last))
+      curDrivers.sortBy(name => name.split(" ").last) // sort by second name alphabetically
+    } else {
+      // Get key and value from the first entry
+      val (k, v) = mapData.head
+
+      // Update curDrivers with unique drivers from the current list
+      val accuCurDrivers = v.foldLeft(curDrivers) { (accumulator, tuple) =>
+        val tupDriver = tuple._1
+        if (!accumulator.contains(tupDriver)) tupDriver :: accumulator else accumulator
+      }
+
+      // Recur with the remaining mapData and updated curDrivers
+      getUniqueDrivers(mapData.tail, accuCurDrivers)
+    }
+  }
+
 
 }
+
+
+
+
+
 
 // def formatTuple(map: Map[Int, Any]): Map[Int, Either[(String, Float, Int), List[(String, Float, Int)]]] = {
 
@@ -363,5 +382,19 @@ object MyApp extends App {
       key -> value.map(insertIntoTuple) // Apply insertIntoTuple to each tuple in the list
     }
   }
+
+ */
+
+/*
+  def mnuShowPoints(f: () => Map[Int, List[(String, Float, Int)]]) = {
+    f() foreach { case (x, y) => println(s"$x: $y") }
+  }
+
+  def mnuShowPointsForTeam(f: (String) => (String, Int)) = {
+    print("Team>")
+    val data = f(readLine)
+    println(s"${data._1}: ${data._2}")
+  }
+
 
  */
