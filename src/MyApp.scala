@@ -1,6 +1,6 @@
 /**
   * Created by Stuart Arscott on 21/11/2024.
-  * Tried to use a little bit of everything
+  * Tried to use a little bit of everything.
   */
 
 import scala.annotation.tailrec
@@ -230,7 +230,7 @@ object MyApp extends App {
 
   // Function displays driver stats when a map with a list of tuples is provided as values
   def displayKeyVals(func: => Map[Int, List[(String, Float, Int)]]): Unit = {
-    // Get the initial map from function argument
+    // Get the initial map from function
     val operatedMap = func
     // Iterate through map
     for ((k, v) <- operatedMap) {
@@ -245,7 +245,7 @@ object MyApp extends App {
 
   // Function displays key and value pairs when value is a single value, e.g. total wins ,etc
   def displayKeyValsSingle(func: => Map[Int, Float]): Unit = {
-    // Get the initial map from function argument
+    // Get the initial map from function
     val operatedMap = func
     // Iterate through map
     for ((k, v) <- operatedMap) {
