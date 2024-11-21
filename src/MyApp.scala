@@ -106,6 +106,33 @@ object MyApp extends App {
   // *******************************************************************************************************************
   // UTILITY FUNCTIONS
 
+  // read data file and return map
+  def readFile(filename: String): Map[Int, List[(String, Float, Int)]] = {
+    // Recursive function to read through data to ake readFile immutable
+    def readLines(lines: Iterator[String], mapBuffer: Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
+      if (lines.hasNext) { // if there are lines left to parse
+        val line = lines.next() // get the next line
+        val splitline = line.split(",").map(_.trim).toList // split line at , and convert to List
+        val drivers = toTuple(splitline.tail) // convert tail into list of tuples
+        val key = splitline.head.toInt // get key from first element
+
+        // Recursively call readLines with the current map
+        readLines(lines, mapBuffer + (key -> (drivers ++ mapBuffer.getOrElse(key, Nil))))
+      } else {
+        mapBuffer // return finished map if no more lines left to parse
+      }
+    }
+
+    try {
+      val lines = Source.fromFile(filename).getLines() // open file
+      readLines(lines, Map()) // start recursion with empty map
+    } catch {
+      case ex: Exception =>
+        println("Sorry, an exception happened." + ex)
+        Map() // returns an empty map (we check for empty map above)
+    }
+  }
+
   // Converts values from string into a list of tuples for Map[Int, list[(String, Float, Int)]]
   // input is list from readfile
   def toTuple(input: List[String]): List[(String, Float, Int)] = {
@@ -115,28 +142,6 @@ object MyApp extends App {
       val numbers = parts(1).split(" ") // splits numbers into score (b4 " "), and wins (after " ")
       (name, numbers(0).toFloat, numbers(1).toInt) // return tuple, driver | points | wins
     }
-  }
-
-  // reads data file - comma separated file
-  def readFile(filename: String): Map[Int, List[(String, Float, Int)]] = {
-    // create buffer to build up map as we read each line
-    var mapBuffer: Map[Int, List[(String, Float, Int)]] = Map()
-    try {
-      for (line <- Source.fromFile(filename).getLines()) {
-        // for each line
-        val splitline = line.split(",").map(_.trim).toList // split line at , and convert to List
-        //print(splitline)
-        val drivers = toTuple(splitline.tail) // head is key, tail is values. Convert values into list of tuples
-        // add element to map buffer
-        // splitline is line from file as List, e.g. List(Bayern Munich, 24)
-        // use head as key
-        // tail is a list, but need just the first (only in this case) element, so use head of tail and convert to int
-        mapBuffer = mapBuffer ++ Map(splitline.head.toInt -> drivers) // add key pair to map, key and list of tuples(drivers)
-      }
-    } catch {
-      case ex: Exception => println("Sorry, an exception happened." + ex)
-    }
-    mapBuffer
   }
 
   // *******************************************************************************************************************
@@ -273,18 +278,18 @@ object MyApp extends App {
 
 
   // Sorting values
-  def sortMap(value:Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
+  def sortMap(mapData:Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
     // sort map by value in descending order -
     // see http://alvinalexander.com/scala/how-to-sort-map-in-scala-key-value-sortby-sortwith
     // always sort by key
-    ListMap(value.toSeq.sortWith(_._1 > _._1): _*) // sort key by key
+    ListMap(mapData.toSeq.sortWith(_._1 > _._1): _*) // sort key by key
   }
 
   // sort values for type Map[Int, Float]
-  def sortMapFloat(value: Map[Int, Float], sortBy: Int = 1): Map[Int, Float] = {
+  def sortMapFloat(mapData: Map[Int, Float], sortBy: Int = 1): Map[Int, Float] = {
     sortBy match {
-      case 1 => ListMap(value.toSeq.sortWith(_._1 > _._1): _*) // sort by key
-      case 2 => ListMap(value.toSeq.sortWith(_._2 > _._2): _*) // sort by value
+      case 1 => ListMap(mapData.toSeq.sortWith(_._1 > _._1): _*) // sort by key descending
+      case 2 => ListMap(mapData.toSeq.sortWith(_._2 > _._2): _*) // sort by value descending
     }
   }
 
