@@ -29,11 +29,12 @@ object MyApp extends App {
   // uses function readOption to show menu and read input
   // uses function menu to invoke menu action
   // will terminate if menu returns false
-  if(mapdata.nonEmpty){
-    var opt = 0
-    do {
-      opt = readOption
-    } while (menu(opt))
+  mapdata match {
+    case _ if mapdata.nonEmpty => // make sure mapdata isnt empty
+      Iterator.continually(readOption)
+        .takeWhile(opt => menu(opt))  // Keep calling menu until it returns false
+        .foreach(_ => ())  // for each element return nothing
+    case _ => // Do nothing if mapdata is empty
   }
 
   // *******************************************************************************************************************
