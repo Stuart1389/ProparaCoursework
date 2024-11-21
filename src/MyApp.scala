@@ -272,7 +272,7 @@ object MyApp extends App {
 
 
 
-  // Sorting values, overloading functions.
+  // Sorting values
   def sortMap(value:Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
     // sort map by value in descending order -
     // see http://alvinalexander.com/scala/how-to-sort-map-in-scala-key-value-sortby-sortwith
@@ -280,8 +280,8 @@ object MyApp extends App {
     ListMap(value.toSeq.sortWith(_._1 > _._1): _*) // sort key by key
   }
 
-  // Sorting values
-  def sortMap(value: Map[Int, Float], sortBy: Int = 1): Map[Int, Float] = {
+  // sort values for type Map[Int, Float]
+  def sortMapFloat(value: Map[Int, Float], sortBy: Int = 1): Map[Int, Float] = {
     sortBy match {
       case 1 => ListMap(value.toSeq.sortWith(_._1 > _._1): _*) // sort by key
       case 2 => ListMap(value.toSeq.sortWith(_._2 > _._2): _*) // sort by value
@@ -314,7 +314,7 @@ object MyApp extends App {
       }
       k -> total // Map key to value total
     }
-    sortMap(result, sortBy)
+    sortMapFloat(result, sortBy)
   }
 
   // Function to find average
@@ -325,7 +325,7 @@ object MyApp extends App {
       val average = totalValue / v.length // get average using total and the number of values in og map
       k -> average // return for each key
     }
-    sortMap(result)
+    sortMapFloat(result)
   }
 
   // Function to select a driver and find their total points in all seasons
