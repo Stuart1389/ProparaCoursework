@@ -1,5 +1,6 @@
 /**
-  * Created by jim on 06/11/2016.
+  * Created by Stuart Arscott on 21/11/2024.
+  * Tried to use a little bit of everything
   */
 
 import scala.annotation.tailrec
@@ -155,7 +156,7 @@ object MyApp extends App {
   @tailrec
   def showSelSeason(): Unit = {
     println("Enter a season to see stats:")
-    sortYear(mapdata).keys.foreach(println) // prints years in order to show user available years
+    sortMap(mapdata).keys.foreach(println) // prints years in order to show user available years
     val selSeason = checkInt() // function gets user input
     if (selSeason != 0){ // 0 backs the user out of the loop
       val seasonMap = getSeason(selSeason)
@@ -183,7 +184,7 @@ object MyApp extends App {
   def showPointsPS(): Unit = {
     print("Points per season:\n")
     // invert changes tuple position for the sort (e.g. ._2 or ._3)
-    displayKeyValsSingle(getTotal(2), invert = true)
+    displayKeyValsSingle(getTotal(2, invert = true))
   }
 
   // starts show selected drivers points chain
@@ -231,10 +232,8 @@ object MyApp extends App {
   def displayKeyVals(func: => Map[Int, List[(String, Float, Int)]]): Unit = {
     // Get the initial map from function argument
     val operatedMap = func
-    // Call sort map to sort keys by value using map from function
-    val sortedMap = sortYear(operatedMap)
     // Iterate through map
-    for ((k, v) <- sortedMap) {
+    for ((k, v) <- operatedMap) {
       println(s"Season - $k:") // Prints the key on its own line (season )
       // print each drivers stats on a new line before respective season
       println(v.sortBy(-_._2).map { // sort tuples by float, aka sort drivers by their points
@@ -245,11 +244,11 @@ object MyApp extends App {
   }
 
   // Function displays key and value pairs when value is a single value, e.g. total wins ,etc
-  def displayKeyValsSingle(func: => Map[Int, Float], invert: Boolean = false): Unit = {
-    // sort map keys or values depending on inverted
-    val sortedMap = sortYearFloat(func, invert)
+  def displayKeyValsSingle(func: => Map[Int, Float]): Unit = {
+    // Get the initial map from function argument
+    val operatedMap = func
     // Iterate through map
-    for ((k, v) <- sortedMap) {
+    for ((k, v) <- operatedMap) {
       // Print the value as int if no fp is needed to accurately represent val
       println(s"$k - ${if (v == v.toInt) v.toInt else f"$v%.1f"}")
     }
@@ -259,7 +258,7 @@ object MyApp extends App {
   def getSeason(seasonVal: Int): Map[Int, List[(String, Float, Int)]] = {
     // match user input value to keys in map
     mapdata.get(seasonVal) match {
-      case Some(data) => Map(seasonVal -> data)  // if key exists, return map with key and value
+      case Some(data) => sortMap(Map(seasonVal -> data))  // if key exists, return map with key and value
       case None => // if key doesnt exist let user know
         println("Season not found")
         Map() // returns an empty map
@@ -272,7 +271,7 @@ object MyApp extends App {
   // the results to be displayed - does not interact with user
 
   // Sorting values
-  def sortYear(value:Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
+  def sortMap(value:Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
     // sort map by value in descending order -
     // see http://alvinalexander.com/scala/how-to-sort-map-in-scala-key-value-sortby-sortwith
     // always sort by key
@@ -280,7 +279,7 @@ object MyApp extends App {
   }
 
   // ehhhhhhhhhhhhhhhhhhhhhhhhhh :<(
-  def sortYearFloat(value: Map[Int, Float], invert: Boolean = false): Map[Int, Float] = {
+  def sortMapFloat(value: Map[Int, Float], invert: Boolean = false): Map[Int, Float] = {
     // sort by key or value depending on boolean
     if(invert){
       ListMap(value.toSeq.sortWith(_._2 > _._2): _*) // sort key by values
@@ -292,18 +291,19 @@ object MyApp extends App {
 
   // Function to find the best driver in each season
   def getTopDriverSeason(): Map[Int, List[(String, Float, Int)]] = {
-    mapdata.map { case (k, v) => // for each key value pair
+    val topDrivers = mapdata.map { case (k, v) => // for each key value pair
       // go through list of tuples, check if current driver has more points than accumulator
       val topDriver = v.foldLeft(v.head) { (currTop, currDri) => // accumulator starts with first driver
         if (currDri._2 > currTop._2) currDri else currTop // if so then they're the top bloke
       }
       k -> List(topDriver) // put back into a list to use displaykeyvals function
     }
+    sortMap(topDrivers)
   }
 
   // Function to find the total of something
-  def getTotal(tupPos: Int): Map[Int, Float] = {
-    mapdata.map { case (k, v) => // for each key value pair
+  def getTotal(tupPos: Int, invert: Boolean = false): Map[Int, Float] = {
+    val result = mapdata.map { case (k, v) => // for each key value pair
       val total = v.foldLeft(0f) { (curTotal, elem) => // go through each tuple and set accumulator to float 0
         // case determines whether to count score (._2/tuple pos 2) or wins (._3/tuple pos 3)
         curTotal + (tupPos match {
@@ -313,16 +313,18 @@ object MyApp extends App {
       }
       k -> total // Map key to value total
     }
+    sortMapFloat(result, invert)
   }
 
   // Function to find average
   def getAverage(): Map[Int, Float] = {
     val total = getTotal(2) // get map with keys and values as total score from function
-    mapdata.map { case (k, v) => // for each key, value
+    val result = mapdata.map { case (k, v) => // for each key, value
       val totalValue = total.getOrElse(k, 1f) // get value from map or default to float 1
       val average = totalValue / v.length // get average using total and the number of values in og map
       k -> average // return for each key
     }
+    sortMapFloat(result)
   }
 
   // Function to select a driver and find their total points in all seasons
@@ -359,6 +361,7 @@ object MyApp extends App {
     }
   }
 
+  // Recursion, get a list of unique drivers to display to user
   @tailrec
   def getUniqueDrivers(mapData: Map[Int, List[(String, Float, Int)]], curDrivers: List[String]): List[String] = {
     // if no more drivers left, aka no more values in mapData to go through
