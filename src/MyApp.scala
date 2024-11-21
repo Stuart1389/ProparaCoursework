@@ -112,6 +112,7 @@ object MyApp extends App {
   // read data file and return map
   def readFile(filename: String): Map[Int, List[(String, Float, Int)]] = {
     // Recursive function to read through data to make readFile immutable
+    @tailrec
     def readLines(lines: Iterator[String], mapBuffer: Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
       if (lines.hasNext) { // if there are lines left to parse
         val line = lines.next() // get the next line
