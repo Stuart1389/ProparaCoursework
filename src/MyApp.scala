@@ -184,7 +184,7 @@ object MyApp extends App {
   def showPointsPS(): Unit = {
     print("Points per season:\n")
     // invert changes tuple position for the sort (e.g. ._2 or ._3)
-    displayKeyValsSingle(getTotal(2, invert = true))
+    displayKeyValsSingle(getTotal(2, sortBy = 2))
   }
 
   // starts show selected drivers points chain
@@ -270,7 +270,9 @@ object MyApp extends App {
   // each of these performs the required operation on the data and returns
   // the results to be displayed - does not interact with user
 
-  // Sorting values
+
+
+  // Sorting values, overloading functions.
   def sortMap(value:Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
     // sort map by value in descending order -
     // see http://alvinalexander.com/scala/how-to-sort-map-in-scala-key-value-sortby-sortwith
@@ -278,15 +280,14 @@ object MyApp extends App {
     ListMap(value.toSeq.sortWith(_._1 > _._1): _*) // sort key by key
   }
 
-  // ehhhhhhhhhhhhhhhhhhhhhhhhhh :<(
-  def sortMapFloat(value: Map[Int, Float], invert: Boolean = false): Map[Int, Float] = {
-    // sort by key or value depending on boolean
-    if(invert){
-      ListMap(value.toSeq.sortWith(_._2 > _._2): _*) // sort key by values
-    } else {
-      ListMap(value.toSeq.sortWith(_._1 > _._1): _*) // sort key by key
+  // Sorting values
+  def sortMap(value: Map[Int, Float], sortBy: Int = 1): Map[Int, Float] = {
+    sortBy match {
+      case 1 => ListMap(value.toSeq.sortWith(_._1 > _._1): _*) // sort by key
+      case 2 => ListMap(value.toSeq.sortWith(_._2 > _._2): _*) // sort by value
     }
   }
+
 
 
   // Function to find the best driver in each season
@@ -302,7 +303,7 @@ object MyApp extends App {
   }
 
   // Function to find the total of something
-  def getTotal(tupPos: Int, invert: Boolean = false): Map[Int, Float] = {
+  def getTotal(tupPos: Int, sortBy: Int = 1): Map[Int, Float] = {
     val result = mapdata.map { case (k, v) => // for each key value pair
       val total = v.foldLeft(0f) { (curTotal, elem) => // go through each tuple and set accumulator to float 0
         // case determines whether to count score (._2/tuple pos 2) or wins (._3/tuple pos 3)
@@ -313,7 +314,7 @@ object MyApp extends App {
       }
       k -> total // Map key to value total
     }
-    sortMapFloat(result, invert)
+    sortMap(result, sortBy)
   }
 
   // Function to find average
@@ -324,7 +325,7 @@ object MyApp extends App {
       val average = totalValue / v.length // get average using total and the number of values in og map
       k -> average // return for each key
     }
-    sortMapFloat(result)
+    sortMap(result)
   }
 
   // Function to select a driver and find their total points in all seasons
