@@ -93,6 +93,8 @@ object MyApp extends App {
   }
 
   def handleSix(): Boolean = {
+    // true args to signify entering user input loop from menu
+    // list of drivers only displayed if true
     showSelDriver(true)
     true
   }
