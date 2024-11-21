@@ -108,14 +108,13 @@ object MyApp extends App {
 
   // read data file and return map
   def readFile(filename: String): Map[Int, List[(String, Float, Int)]] = {
-    // Recursive function to read through data to ake readFile immutable
+    // Recursive function to read through data to make readFile immutable
     def readLines(lines: Iterator[String], mapBuffer: Map[Int, List[(String, Float, Int)]]): Map[Int, List[(String, Float, Int)]] = {
       if (lines.hasNext) { // if there are lines left to parse
         val line = lines.next() // get the next line
         val splitline = line.split(",").map(_.trim).toList // split line at , and convert to List
         val drivers = toTuple(splitline.tail) // convert tail into list of tuples
         val key = splitline.head.toInt // get key from first element
-
         // Recursively call readLines with the current map
         readLines(lines, mapBuffer + (key -> (drivers ++ mapBuffer.getOrElse(key, Nil))))
       } else {
@@ -134,7 +133,7 @@ object MyApp extends App {
   }
 
   // Converts values from string into a list of tuples for Map[Int, list[(String, Float, Int)]]
-  // input is list from readfile
+  // input is list from readFile
   def toTuple(input: List[String]): List[(String, Float, Int)] = {
     input.map { entry =>
       val parts = entry.split(": ") // splits into 2 parts, b4 and after :
