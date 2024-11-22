@@ -225,7 +225,7 @@ object MyApp extends App {
       case Success(0) if notMenu => // lets the user break out of the loop
         println("Operation cancelled.")
         0
-      case Success(value) => value
+      case Success(value) => value // return value
       // case for exception below, let user know they entered an invalid input and try again
       case Failure(_) =>
         println("Invalid input. Please enter a number.")
@@ -371,6 +371,7 @@ object MyApp extends App {
   }
 
   // Recursion, get a list of unique drivers to display to user
+  // could make this much simpler without recursion, just using it to show i can
   @tailrec
   def getUniqueDrivers(mapData: Map[Int, List[(String, Float, Int)]], curDrivers: List[String]): List[String] = {
     // if no more drivers left, aka no more values in mapData to go through
